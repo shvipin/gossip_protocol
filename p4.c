@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <pthread.h>
+#include "debug.h"
 
 #define ENDPOINTS "endpoints"
 #define NUM_THREADS 2
@@ -23,7 +24,7 @@ int random_seed;
 // our globals
 typedef struct node {
 } node_t;
-node *endpoints; 
+node_t *endpoints;
 int last_process = FALSE;
 FILE *ep;
 pthread_t server_thread;
@@ -54,9 +55,11 @@ int main(int argc, const char *argv[])
   random_seed = atoi(argv[7]);
 
   // allocate memory for our endpoints
-  endpoints = (node *)malloc(num_nodes * sizeof(node_t));
-  ep = fopen(ENDPOINTS, "w+"):  
-
+  endpoints = (node_t *)malloc(num_nodes * sizeof(node_t));
+  ep = fopen(ENDPOINTS, "a+"):
+  if (ep == NULL) {
+    log_err("Couldn't open the endpoints file!");
+  }
   // dispatch server thread
   pthread_barrier_init(&barrier, NULL, NUM_THREADS);
   pthread_create(&server_thread, 0, NULL, &server, NULL);
@@ -65,7 +68,7 @@ int main(int argc, const char *argv[])
   pthread_barrier_wait(&barrier);
   client();
 
-  fclose(fp);
+  fclose(ep);
   return 0;
 }
 
@@ -73,9 +76,9 @@ int main(int argc, const char *argv[])
 void client()
 {
   if (last_process) {
-
+    debug("This is the last process");
   } else {
-
+    debug("I'm not the last process");
   }
 }
 
