@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include "debug.h"
 
+#define NODE_INFO_SIZE 20
+
 /* struct sockaddr_in {
  * sin_port: PORT (ushort)
  * sin_family: AF_INET (short)
@@ -12,11 +14,12 @@
  * sin_zero[8] : char; must be set to zero
  */
 
-typedef struct serverInfo {
+typedef struct nodeInfo {
   int socket;
   struct sockaddr_in addrInfo;
-} serverInfo;
+} nodeInfo;
 
 // Returns pointer to sockaddr_in which has ipaddress and port + socket to listen on
-serverInfo *setupServer(void);
-
+nodeInfo *setupNode(void);
+int cleanupNode(int socket);
+char *getNodeInfo(nodeInfo *node);
