@@ -3,6 +3,7 @@
 #include <strings.h>
 #include <pthread.h>
 #include "debug.h"
+#include "netif.h"
 
 #define ENDPOINTS "endpoints"
 #define NUM_THREADS 2
@@ -25,6 +26,7 @@ int random_seed;
 typedef struct node {
 } node_t;
 node_t *endpoints;
+
 int last_process = FALSE;
 FILE *ep;
 pthread_t server_thread;
@@ -56,10 +58,7 @@ int main(int argc, const char *argv[])
 
   // allocate memory for our endpoints
   endpoints = (node_t *)malloc(num_nodes * sizeof(node_t));
-  ep = fopen(ENDPOINTS, "a+"):
-  if (ep == NULL) {
-    log_err("Couldn't open the endpoints file!");
-  }
+
   // dispatch server thread
   pthread_barrier_init(&barrier, NULL, NUM_THREADS);
   pthread_create(&server_thread, 0, NULL, &server, NULL);
@@ -75,6 +74,7 @@ int main(int argc, const char *argv[])
 
 void client()
 {
+  debug("Client function started...");
   if (last_process) {
     debug("This is the last process");
   } else {
@@ -85,5 +85,15 @@ void client()
 
 void server()
 {
+  nodeInfo *node = setupNode();
+  ep = fopen(ENDPOINTS, "a+");
+  if (ep == NULL) {
+    log_err("Couldn't open the endpoints file!");
+  }
+  debug("endpoints file opened");
+  fprintf(ep, "%s\n", getNodeInfo(node));
+  debug("node info written to endpoints file");
+  fclose(ep);
+  pthread_barrier_wait(&barrier);
 
 }

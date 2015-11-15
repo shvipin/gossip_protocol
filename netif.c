@@ -15,12 +15,12 @@ nodeInfo *setupNode(void)
     exit(-1);
   }
   node->socket = s;
-  
+
   // 2. Bind socket with port 0; this allows the OS to use an unused port
   debug("Binding socket");
   memset((char *)&(node->addrInfo), 0, sizeof(struct sockaddr_in));
   node->addrInfo.sin_family = AF_INET;
-  
+
   if(bind(node->socket, (struct sockaddr *) &node->addrInfo, sizeof(struct sockaddr_in)) < 0)
   {
     log_err("ERROR binding socket");
@@ -53,7 +53,7 @@ nodeInfo *setupNode(void)
     }
   }
   freeifaddrs(if_addr);
-  
+
   debug("We're done -> IP Address: %s Port Number: %d", inet_ntoa(node->addrInfo.sin_addr), node->addrInfo.sin_port);
   // 4. Return socket for main node thread to listen into
   return node;
