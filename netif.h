@@ -23,3 +23,4 @@ typedef struct nodeInfo {
 nodeInfo *setupNode(void);
 int cleanupNode(int socket);
 char *getNodeInfo(nodeInfo *node);
+char *splitAddr(char *nodeAddr);

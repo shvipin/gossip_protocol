@@ -7,7 +7,7 @@
 SRC=.
 CC=gcc
 #CFLAGS= -O3 -I$(INC) -I$(SRC)
-CFLAGS= -g -I$(INC) -I$(SRC)
+CFLAGS= -g -I$(INC) -I$(SRC) -lpthread
 BUILD=.
 
 DEPS = $(wildcard $(SRC)/*.c)
@@ -16,7 +16,7 @@ OBJECTS = $(patsubst $(SRC)/%.c, $(BUILD)/%.o, $(DEPS))
 default: all
 
 clean:
-	rm -f p4.o p4
+	rm -f p4.o p4 endpoints netif.o
 
 $(BUILD)/%.o: $(SRC)/%.c
 	$(CC) -c -o $@ $< $(CFLAGS)

@@ -86,7 +86,7 @@ char *splitAddr(char *nodeAddr)
   return portAddr;
 }
 
-/***Stubbed out: Only for testing*/
+/***Stubbed out: Only for testing
 main()
 {
   nodeInfo *x = setupNode();
@@ -95,4 +95,4 @@ main()
   printf("We have %s as an IP address and %s as port\n", tmp, port);
   cleanupNode(x->socket);
 }
-/***/
+**/
