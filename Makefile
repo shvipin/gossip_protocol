@@ -16,7 +16,7 @@ OBJECTS = $(patsubst $(SRC)/%.c, $(BUILD)/%.o, $(DEPS))
 default: all
 
 clean:
-	rm -f p4.o p4 endpoints netif.o
+	rm -f p4.o p4 endpoints netif.o client.o server.o util.o
 
 $(BUILD)/%.o: $(SRC)/%.c
 	$(CC) -c -o $@ $< $(CFLAGS)

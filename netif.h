@@ -1,3 +1,5 @@
+#ifndef __NETIF_H__
+#define __NETIF_H__
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -24,3 +26,5 @@ nodeInfo *setupNode(void);
 int cleanupNode(int socket);
 char *getNodeInfo(nodeInfo *node);
 char *splitAddr(char *nodeAddr);
+
+#endif //__NETIF_H__
