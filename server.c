@@ -50,3 +50,16 @@ void *server(void *token)
   pthread_barrier_wait(&barrier);
   free(line);
 }
+
+void server_(char *message)
+{
+  
+  while (TRUE) {
+    if (recvfrom(self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
+      log_err("Failed to receive message");
+    }
+    debug("Received message %s", message);
+    decode(message + 3); 
+
+  }
+}

@@ -28,6 +28,9 @@ pthread_t server_thread;
 pthread_barrier_t barrier;
 long life_time =0;//It should be num_failuer_nodes * ( time_bw_failures +1)
 
+neighbor_t *neighbors;
+int *send_to;
+
 int main(int argc, const char *argv[])
 {
   if (argc != 8) {
@@ -42,7 +45,7 @@ int main(int argc, const char *argv[])
       the see of the random number generator S\n");
     exit(1);
   }
-
+  int i=0;
   // take in user's arguments
   num_nodes = atoi(argv[1]);
   gossip_b = atoi(argv[2]);
@@ -55,6 +58,15 @@ int main(int argc, const char *argv[])
   //storing life of this program
   life_time = num_failure_nodes * ( time_bw_failures +1 );
 
+  //allocate space for neighbors
+  neighbors = (neighbor_t *)malloc(num_nodes * sizeof(neighbor_t));
+  for(i =0;i<num_nodes;i++){
+    neighbors[i].index = -1;
+  }
+
+  //allocate space for storing index of neighbors to send heartbeats
+  send_to = (int *)malloc(gossip_b * sizeof(int));
+  
   // allocate memory for our endpoints
   endpoints = (nodeInfo *)malloc(num_nodes * sizeof(nodeInfo));
 
