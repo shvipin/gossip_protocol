@@ -37,10 +37,11 @@ void send_heartbeats(int *send_to, int gossip_b)
 {
   int i;
   char *msg = encode(&self_id, 1); 
+  debug("encoded message : %s",msg);
   int len = strlen(msg);
   for(i=0;i<gossip_b;i++)
   {
-    send_socket_msg(self_id,send_to[i],msg,len);
+    send_socket_msg(self->socket,send_to[i],msg,len);
   }
   free(msg);
 }

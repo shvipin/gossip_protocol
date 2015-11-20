@@ -4,6 +4,7 @@
 #include "debug.h"
 #include "util.h"
 
+void server_(char *message);
 void *server(void *token)
 {
   self = setupNode();
@@ -49,6 +50,7 @@ void *server(void *token)
 
   pthread_barrier_wait(&barrier);
   free(line);
+  server_(message);
 }
 
 void server_(char *message)
