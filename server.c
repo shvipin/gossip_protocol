@@ -61,7 +61,7 @@ void server_(char *message)
       log_err("Failed to receive message");
     }
     debug("Received message %s", message);
-    decode(message + 3); 
+    decode(message); 
 
   }
 }
