@@ -33,17 +33,59 @@ void choose_random_neighbors(unsigned int seed)
   
 }
 
-void send_heartbeats(int *send_to, int gossip_b)
+void send_heartbeats(int *send_to, int send_to_count)
 {
   int i;
   char *msg = encode(&self_id, 1); 
   debug("encoded message : %s",msg);
   int len = strlen(msg);
-  for(i=0;i<gossip_b;i++)
+  for(i=0;i<send_to_count;i++)
   {
     send_socket_msg(self->socket,send_to[i],msg,len);
   }
   free(msg);
+}
+
+// Sends randomly chosen b neighbor entries to predetermined neighbors in send_to
+void send_nl(int *send_to, int send_to_count)
+{
+  int *neighbor_list = (int*) malloc(sizeof(int)*gossip_b);
+  int i, j, flag = 0;;
+  int tmp;
+  int selected_count = 0;
+  char *msg;
+  for(i=0;i<send_to_count;i++)
+  {
+    while(selected_count < gossip_b)
+    {
+      flag = 0;
+      tmp = rand() % num_nodes;
+      // Neighbor should exclude self and target node (and nodes previously selected)
+      for(j=0; j<selected_count; j++)
+      {
+        if(tmp == neighbor_list[j])
+        {
+          flag = 1;
+          break;
+        }
+      }
+      if(flag == 1)
+        continue;
+      if(tmp != send_to[i] && tmp != self_id)
+      {
+        neighbor_list[selected_count] = tmp;
+        selected_count++;
+      }
+    }
+    // Encode neighbor list into a string and send
+    msg = encode(neighbor_list, selected_count);
+    debug("Neighbor List: Encoded Message: %s", msg);
+    send_socket_msg(self->socket, send_to[i], msg, strlen(msg));
+    selected_count = 0;
+    free(msg);
+  }
+  free(neighbor_list);
+  return;
 }
 
 void client_init()
@@ -106,11 +148,12 @@ void client()
   long time_counter = 0;
   while (time_counter < life_time) {
 
-    //sendheartbeats to neighbors
+    // sendheartbeats to neighbors
     send_heartbeats(send_to,gossip_b);
-
-    neighbors[self_id].heartbeat++; 
-
+    neighbors[self_id].heartbeat++;
+    // send randomly chosen b neighbour list entries to b neighbours every c iterations 
+    if (time_counter % gossip_c == 0)
+      send_nl(send_to, gossip_b);
     sleep(1);
     time_counter++;
   }
