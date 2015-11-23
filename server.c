@@ -1,13 +1,12 @@
-#include <pthread.h>
+#include "p4.h"
 #include "server.h"
-#include "netif.h"
-#include "debug.h"
-#include "util.h"
 
-void server_(char *message);
+void decode(char *message);
+void server_listen(char *message);
+
 void *server(void *token)
 {
-  self = setupNode();
+  me.self = setupNode();
   char message[BUFFER_LENGTH];
   int numNodes = 0;
   char *line = NULL;
@@ -16,30 +15,30 @@ void *server(void *token)
 
   do {
     //sleep(3);
-    ep = fopen(ENDPOINTS, "a+");
-  } while (ep == NULL);
+    me.endpoints_fp = fopen(ENDPOINTS, "a+");
+  } while (me.endpoints_fp == NULL);
   
-  while ((read = getline(&line, &len, ep)) != -1) {
+  while ((read = getline(&line, &len, me.endpoints_fp)) != -1) {
     line[read - 1] = '\0';
     read--;
     numNodes++;
     debug("Read %s from endpoints file", line);
   }
-  self_id = numNodes;
-  debug("Done reading endpoints file, we have id: %d", self_id);
+  me.id = numNodes;
+  debug("Done reading endpoints file, we have id: %d", me.id);
 
-  if (num_nodes - 1 == numNodes) {
+  if (args.num_nodes - 1 == numNodes) {
     debug("We are the last process");
-    last_process = TRUE;
+    me.last_process = TRUE;
   }
-  fprintf(ep, "%s\n", getNodeInfo(self));
+  fprintf(me.endpoints_fp, "%s\n", getNodeInfo(me.self));
   debug("Node info written to endpoints file");
-  fclose(ep);
+  fclose(me.endpoints_fp);
 
-  if (!last_process) {
+  if (!me.last_process) {
     // wait for OK message
     debug("Waiting for \"OK\" message");
-    if (recvfrom(self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
+    if (recvfrom(me.self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
       log_err("Failed to receive message");
     }
     debug("Received message %s", message);
@@ -48,20 +47,46 @@ void *server(void *token)
     }
   } 
 
-  pthread_barrier_wait(&barrier);
+  pthread_barrier_wait(&me.barrier);
   free(line);
-  server_(message);
+  server_listen(message);
 }
 
-void server_(char *message)
+void decode(char *message)
 {
+  debug("Start decoding message %s", message);
+  int i;
+  char *decoded_msg = strtok(message," ");
+
+  int numNodes = atoi(decoded_msg);
   
+  for (i = 0; i < numNodes; i++) {
+
+    int index = atoi(strtok(NULL," "));
+    int heartbeat = atoi(strtok(NULL," "));
+
+    if (heartbeat > me.neighbors[index].heartbeat) {
+      debug("r_neighbors %d is more recent", index);
+      me.neighbors[index].index = index;
+      me.neighbors[index].heartbeat = heartbeat;
+      time(&me.neighbors[index].localtime); 
+    }
+  } 
+}
+
+void server_listen(char *message)
+{
   while (TRUE) {
-    if (recvfrom(self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
+    if (recvfrom(me.self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
       log_err("Failed to receive message");
     }
-    debug("Received message %s", message);
-    decode(message); 
 
+    debug("Received message %s", message);
+
+    if (!me.alive) {
+      debug("I am dead");
+      continue;
+    }
+    decode(message); 
   }
 }
