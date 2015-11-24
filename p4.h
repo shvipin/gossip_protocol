@@ -26,6 +26,7 @@ typedef struct gossip_args {
   int num_failure_nodes;
   int time_bw_failures;
   int random_seed;
+  int time_to_run;
 } gossip_args_t;
 
 typedef struct neighbor {
@@ -40,6 +41,8 @@ typedef struct self {
   int last_process;
   int life_time;
   int alive;
+  unsigned int neighbor_seed;
+  unsigned int killer_seed;
   neighbor_t *neighbors;
   nodeInfo *self;
   pthread_barrier_t barrier;

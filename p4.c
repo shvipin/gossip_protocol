@@ -10,7 +10,7 @@ int main(int argc, const char *argv[])
   pthread_t server_thread;
   int i;
 
-  if (argc != 8) {
+  if (argc != 9) {
     // user messed up. Print usage info and exit
     printf("Usage ./p4 N b c F B P S\n \
       number of peer nodes N\n \
@@ -19,7 +19,8 @@ int main(int argc, const char *argv[])
       number of seconds after which a node is considered dead F\n \
       number of bad nodes that should fail B\n \
       number of seconds to wait between failures P\n \
-      the see of the random number generator S\n");
+      the see of the random number generator S\n \
+      the total number of seconds to run T\n");
     exit(1);
   }
   // take in user's arguments
@@ -30,6 +31,7 @@ int main(int argc, const char *argv[])
   args.num_failure_nodes = atoi(argv[5]);
   args.time_bw_failures = atoi(argv[6]);
   args.random_seed = atoi(argv[7]);
+  args.time_to_run = atoi(argv[8]);
 
   //storing life of this program
   me.life_time = args.num_failure_nodes * ( args.time_bw_failures +1 );
@@ -43,6 +45,8 @@ int main(int argc, const char *argv[])
   pthread_mutex_init(&me.lock, NULL);
   me.last_process = FALSE;
   me.alive = TRUE;
+  me.neighbor_seed = 0;
+  me.killer_seed = args.random_seed;
 
   // dispatch server thread
   pthread_barrier_init(&me.barrier, NULL, NUM_THREADS);

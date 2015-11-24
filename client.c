@@ -36,31 +36,39 @@ void send_socket_msg(int socket_id, int neighbor_index, const char *msg, int msg
   sendto(socket_id, msg, msg_len, 0, &endpoints[neighbor_index].addrInfo, sizeof(struct sockaddr_in));
 }
 
-void choose_random_neighbors(unsigned int seed)
+void choose_random_neighbors(int *neighbors)
 {
-  int found_neighbors=0;
-  int temp=0;
-  srandom(seed);
+  int i;
+  int found_neighbors = 0;
+  int temp = 0;
+  // don't maintain too much history
+  memset(neighbors[0], -1, args.gossip_b * sizeof(int));
         
   while (found_neighbors < args.gossip_b) {
-    temp = random() % args.num_nodes;
-    if(temp == me.id) continue;
-    if(me.neighbors[temp].index<0) {
-      me.neighbors[temp].index = temp;
-      send_to[found_neighbors]=temp;
-      found_neighbors++;
-    } 
-  } 
+    int flag = 0;
+    temp = rand_r(&me.neighbor_seed) % args.num_nodes;
+    if (temp == me.id) continue;
+
+    // Neighbor should exclude me.self and target node (and nodes previously selected)
+    for (i = 0; i < selected_count; i++) {
+      if (temp == neighbors[i]) {
+        flag = 1;
+        break;
+      }
+    }
+    if (flag == 1) continue;
+    neighbors[selected_count] = temp;
+    found_neighbors++;
+  }
 }
 
 void send_heartbeats(int *send_to, int send_to_count)
 {
   int i;
   char *msg = encode(&me.id, 1); 
-  debug("encoded message : %s",msg);
+  debug("encoded message : %s", msg);
   int len = strlen(msg);
-  for(i=0;i<send_to_count;i++)
-  {
+  for (i = 0; i < send_to_count; i++) {
     send_socket_msg(me.self->socket,send_to[i],msg,len);
   }
   free(msg);
@@ -70,35 +78,12 @@ void send_heartbeats(int *send_to, int send_to_count)
 void send_nl(int *send_to, int send_to_count)
 {
   int *neighbor_list = (int*) malloc(sizeof(int)*args.gossip_b);
-  int i, j, flag = 0;;
+  int i, j, flag = 0;
   int tmp;
   int selected_count = 0;
   char *msg;
   
-  while(selected_count < args.gossip_b)
-  {
-    flag = 0;
-    tmp = rand() % args.num_nodes;
-    // Neighbor should exclude me.self and target node (and nodes previously selected)
-    for(j=0; j<selected_count; j++)
-    {
-      if(tmp == neighbor_list[j])
-      {
-        flag = 1;
-        break;
-      }
-    }
-    if(flag == 1)
-      continue;
-    if(tmp != send_to[i] && tmp != me.id && neighbor_list[tmp] != -1)
-    {
-      neighbor_list[selected_count] = tmp;
-      selected_count++;
-    }
-  }
-
-  for(i=0;i<send_to_count;i++)
-  {
+  for (i = 0; i < send_to_count; i++) {
     // Encode neighbor list into a string and send
     msg = encode(neighbor_list, selected_count);
     debug("Neighbor List: Encoded Message: %s", msg);
@@ -157,9 +142,8 @@ void client_init()
     debug("I'm not the last process");
   }
   free(line);
-  choose_random_neighbors(args.random_seed + me.id);
+  me.neighbor_seed = args.random_seed + me.id;
   me.neighbors[me.id].index = me.id;
-
 }
 
 void client_cleanup()
@@ -176,7 +160,7 @@ void client()
 
   client_init();
   long time_counter = 0;
-  while (time_counter < me.life_time) {
+  while (time_counter < args.time_to_run) {
     if (!me.alive) {
       debug("I am dead");
       continue;
@@ -185,8 +169,9 @@ void client()
     send_heartbeats(send_to,args.gossip_b);
     me.neighbors[me.id].heartbeat++;
     // send randomly chosen b neighbour list entries to b neighbours every c iterations 
-    if (time_counter < args.gossip_c)
+    if (time_counter < args.gossip_c) {
       send_nl(send_to, args.gossip_b);
+    }
     sleep(1);
     time_counter++;
   }
