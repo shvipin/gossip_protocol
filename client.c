@@ -51,7 +51,7 @@ int choose_random_neighbors(int *neighbors)
   // don't maintain too much history
   memset(neighbors, -1, args.gossip_b * sizeof(int));
         
-  while (found_neighbors < args.gossip_b && found_neighbors + dead_nodes < args.num_nodes) {
+  while (found_neighbors < args.gossip_b && found_neighbors + dead_nodes < args.num_nodes - 1) {
 
     temp = rand_r(&me.neighbor_seed) % args.num_nodes;
     if(prev_seen[temp] == 1) continue;
@@ -213,6 +213,7 @@ void check_dead_neighbors(){
   time_t current_time;
   time(&current_time);
 
+  pthread_mutex_lock(&me.lock);
   for(i = 0; i < args.num_nodes; i++){
 
     if(me.neighbors[i].index >= STATE_LIVE && me.neighbors[i].index != me.id){
@@ -221,6 +222,7 @@ void check_dead_neighbors(){
       }    
     }
   }
+  pthread_mutex_unlock(&me.lock);
 }
 
 void check_me_dead(){
@@ -247,6 +249,7 @@ char *encode(int *nodes,int numNodes)
   char *message = (char *)malloc(BUFFER_LENGTH);
   char num_str[15] = "";
   message[0]='\0';
+  memset(message,'\0',BUFFER_LENGTH);
   sprintf(num_str,"%d",numNodes);
   strcat(message,num_str);
   debug("******************* %s",message);

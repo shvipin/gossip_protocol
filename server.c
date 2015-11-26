@@ -65,7 +65,7 @@ void decode(char *message)
 
     int index = atoi(strtok(NULL," "));
     int heartbeat = atoi(strtok(NULL," "));
-    if (heartbeat > me.neighbors[index].heartbeat) {
+    if (me.neighbors[index].index != STATE_DEAD && me.neighbors[index].index != me.id && heartbeat > me.neighbors[index].heartbeat) {
       debug("r_neighbors %d is more recent", index);
       me.neighbors[index].index = index;
       me.neighbors[index].heartbeat = heartbeat;
@@ -78,7 +78,7 @@ void decode(char *message)
 void server_listen(char *message)
 {
   while (TRUE) {
-    message[0]='\0';
+    memset(message,'\0',BUFFER_LENGTH);
     if (recvfrom(me.self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
       log_err("Failed to receive message");
     }
