@@ -14,6 +14,10 @@
 #define TRUE 1
 #define FALSE 0
 #define BUFFER_LENGTH 65536
+#define STATE_LIVE 0
+#define STATE_UNKNOWN -1
+#define STATE_DEAD -2
+
 //#define ENCODE_HEADER "NL_"
 //#define ENCODE_PADDING 10
 
@@ -47,6 +51,8 @@ typedef struct self {
   nodeInfo *self;
   pthread_barrier_t barrier;
   pthread_mutex_t lock;
+  int *killed_history;
+  int current_dead_count;
 } self_t;
 
 extern gossip_args_t args;

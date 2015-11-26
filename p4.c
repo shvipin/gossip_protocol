@@ -40,13 +40,18 @@ int main(int argc, const char *argv[])
   me.neighbors = (neighbor_t *)malloc(args.num_nodes * sizeof(neighbor_t));
   for (i = 0; i < args.num_nodes; i++) {
     me.neighbors[i].index = -1;
+    me.neighbors[i].heartbeat = 0;
+    me.neighbors[i].localtime = 0;
   }
+  me.current_dead_count = 0;
 
   pthread_mutex_init(&me.lock, NULL);
   me.last_process = FALSE;
   me.alive = TRUE;
   me.neighbor_seed = 0;
   me.killer_seed = args.random_seed;
+  me.killed_history = (int *)malloc(sizeof(int) * args.num_nodes);
+  memset(me.killed_history,0,sizeof(int) * args.num_nodes);
 
   // dispatch server thread
   pthread_barrier_init(&me.barrier, NULL, NUM_THREADS);

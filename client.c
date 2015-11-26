@@ -9,6 +9,9 @@ char *encode(int *nodes,int length);
 void dump_my_info();
 void dump_node_info(neighbor_t node);
 
+void check_dead_neighbors();
+void check_me_dead();
+
 void dump_node_info(neighbor_t node)
 {
   debug("#############################");
@@ -36,30 +39,34 @@ void send_socket_msg(int socket_id, int neighbor_index, const char *msg, int msg
   sendto(socket_id, msg, msg_len, 0, &endpoints[neighbor_index].addrInfo, sizeof(struct sockaddr_in));
 }
 
-void choose_random_neighbors(int *neighbors)
+int choose_random_neighbors(int *neighbors)
 {
   int i;
   int found_neighbors = 0;
   int temp = 0;
-  // don't maintain too much history
-  memset(neighbors[0], -1, args.gossip_b * sizeof(int));
-        
-  while (found_neighbors < args.gossip_b) {
-    int flag = 0;
-    temp = rand_r(&me.neighbor_seed) % args.num_nodes;
-    if (temp == me.id) continue;
+  int dead_nodes = 0;
+  int *prev_seen = (int *) malloc(sizeof(int) * args.num_nodes);
+  memset(prev_seen, 0, args.num_nodes * sizeof(int));
 
-    // Neighbor should exclude me.self and target node (and nodes previously selected)
-    for (i = 0; i < selected_count; i++) {
-      if (temp == neighbors[i]) {
-        flag = 1;
-        break;
-      }
+  // don't maintain too much history
+  memset(neighbors, -1, args.gossip_b * sizeof(int));
+        
+  while (found_neighbors < args.gossip_b && found_neighbors + dead_nodes < args.num_nodes) {
+
+    temp = rand_r(&me.neighbor_seed) % args.num_nodes;
+    if(prev_seen[temp] == 1) continue;
+    
+    prev_seen[temp] = 1;
+    
+    if (temp == me.id) continue;
+    if(me.neighbors[temp].index == STATE_DEAD){
+      dead_nodes++;
+      continue;
     }
-    if (flag == 1) continue;
-    neighbors[selected_count] = temp;
-    found_neighbors++;
+
+    neighbors[found_neighbors++] = temp;
   }
+  return found_neighbors;
 }
 
 void send_heartbeats(int *send_to, int send_to_count)
@@ -74,23 +81,27 @@ void send_heartbeats(int *send_to, int send_to_count)
   free(msg);
 }
 
-// Sends randomly chosen b neighbor entries to predetermined me.neighbors in send_to
+// Sends whole known live neighbor list entries to predetermined me.neighbors in send_to
 void send_nl(int *send_to, int send_to_count)
 {
-  int *neighbor_list = (int*) malloc(sizeof(int)*args.gossip_b);
-  int i, j, flag = 0;
-  int tmp;
+  int *neighbor_list = (int*) malloc(sizeof(int)*args.num_nodes);
+  int i ;
   int selected_count = 0;
   char *msg;
   
+  for(i = 0; i < args.num_nodes; i++){
+    //select neighbors which are not dead or not unknown.
+    if(me.neighbors[i].index >= STATE_LIVE)
+      neighbor_list[selected_count++] = me.neighbors[i].index;
+  }
+
+  msg = encode(neighbor_list, selected_count);
   for (i = 0; i < send_to_count; i++) {
     // Encode neighbor list into a string and send
-    msg = encode(neighbor_list, selected_count);
     debug("Neighbor List: Encoded Message: %s", msg);
     send_socket_msg(me.self->socket, send_to[i], msg, strlen(msg));
-    selected_count = 0;
-    free(msg);
   }
+  free(msg);
   free(neighbor_list);
   return;
 }
@@ -160,7 +171,14 @@ void client()
 
   client_init();
   long time_counter = 0;
+  int *send_nl_list = (int *)malloc(sizeof(int) * args.gossip_b);
+  int b = args.gossip_b; 
+
   while (time_counter < args.time_to_run) {
+    
+    sleep(1);
+    time_counter++;
+
     if (!me.alive) {
       debug("I am dead");
       continue;
@@ -170,12 +188,50 @@ void client()
     me.neighbors[me.id].heartbeat++;
     // send randomly chosen b neighbour list entries to b neighbours every c iterations 
     if (time_counter < args.gossip_c) {
-      send_nl(send_to, args.gossip_b);
+      b = choose_random_neighbors(send_nl_list);
+      send_nl(send_nl_list,b);
     }
-    sleep(1);
-    time_counter++;
+
+    check_dead_neighbors();
+
+    if(time_counter%args.time_bw_failures == 0 && me.current_dead_count < args.num_failure_nodes)   
+      check_me_dead();
   }
+  free(send_nl_list);
   client_cleanup();
+}
+
+void check_dead_neighbors(){
+  int i = 0;
+  time_t current_time;
+  time(&current_time);
+
+  for(i = 0; i < args.num_nodes; i++){
+
+    if(me.neighbors[i].index >= STATE_LIVE && me.neighbors[i].index != me.id){
+      if(current_time - me.neighbors[i].localtime >= args.time_to_failure){
+        me.neighbors[i].index = STATE_DEAD;
+      }    
+    }
+  }
+}
+
+void check_me_dead(){
+  int temp = 0;
+
+  while(TRUE){
+    temp = rand_r(&me.killer_seed)%args.num_nodes;
+    
+    if(me.killed_history[temp] == 0) break;
+  }
+
+  me.killed_history[temp] = 1;
+  me.current_dead_count++;
+
+  if(temp == me.id){
+    me.alive = FALSE;
+    me.neighbors[me.id].index = STATE_DEAD;
+  }
 }
 
 char *encode(int *nodes,int numNodes)
