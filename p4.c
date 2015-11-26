@@ -61,5 +61,6 @@ int main(int argc, const char *argv[])
   pthread_barrier_wait(&me.barrier);
   client();
 
+  pthread_mutex_destroy(&me.lock);
   return 0;
 }

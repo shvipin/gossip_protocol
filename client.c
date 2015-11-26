@@ -59,10 +59,14 @@ int choose_random_neighbors(int *neighbors)
     prev_seen[temp] = 1;
     
     if (temp == me.id) continue;
+
+    pthread_mutex_lock(&me.lock);
     if(me.neighbors[temp].index == STATE_DEAD){
       dead_nodes++;
+      pthread_mutex_unlock(&me.lock);
       continue;
     }
+    pthread_mutex_unlock(&me.lock);
 
     neighbors[found_neighbors++] = temp;
   }
@@ -89,11 +93,13 @@ void send_nl(int *send_to, int send_to_count)
   int selected_count = 0;
   char *msg;
   
+  pthread_mutex_lock(&me.lock); 
   for(i = 0; i < args.num_nodes; i++){
     //select neighbors which are not dead or not unknown.
     if(me.neighbors[i].index >= STATE_LIVE)
       neighbor_list[selected_count++] = me.neighbors[i].index;
   }
+  pthread_mutex_unlock(&me.lock);
 
   msg = encode(neighbor_list, selected_count);
   for (i = 0; i < send_to_count; i++) {
@@ -155,6 +161,7 @@ void client_init()
   free(line);
   me.neighbor_seed = args.random_seed + me.id;
   me.neighbors[me.id].index = me.id;
+  choose_random_neighbors(send_to);
 }
 
 void client_cleanup()
@@ -243,6 +250,7 @@ char *encode(int *nodes,int numNodes)
   sprintf(num_str,"%d",numNodes);
   strcat(message,num_str);
   debug("******************* %s",message);
+  pthread_mutex_lock(&me.lock);
   for (i = 0; i < numNodes; i++) {
     strcat(message," ");
     
@@ -254,6 +262,7 @@ char *encode(int *nodes,int numNodes)
     sprintf(num_str,"%d",me.neighbors[nodes[i]].heartbeat);
     strcat(message,num_str);
   }
+  pthread_mutex_unlock(&me.lock);
 
   debug("******************* %s",message);
   return message;

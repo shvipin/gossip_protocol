@@ -60,11 +60,11 @@ void decode(char *message)
 
   int numNodes = atoi(decoded_msg);
   
+  pthread_mutex_lock(&me.lock);
   for (i = 0; i < numNodes; i++) {
 
     int index = atoi(strtok(NULL," "));
     int heartbeat = atoi(strtok(NULL," "));
-
     if (heartbeat > me.neighbors[index].heartbeat) {
       debug("r_neighbors %d is more recent", index);
       me.neighbors[index].index = index;
@@ -72,11 +72,13 @@ void decode(char *message)
       time(&me.neighbors[index].localtime); 
     }
   } 
+  pthread_mutex_unlock(&me.lock);
 }
 
 void server_listen(char *message)
 {
   while (TRUE) {
+    message[0]='\0';
     if (recvfrom(me.self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
       log_err("Failed to receive message");
     }
