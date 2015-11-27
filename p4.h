@@ -10,6 +10,8 @@
 #include "netif.h"
 
 #define ENDPOINTS "endpoints"
+#define FILENAME_SIZE 20
+#define NODE_DUMP "list"
 #define NUM_THREADS 2
 #define TRUE 1
 #define FALSE 0

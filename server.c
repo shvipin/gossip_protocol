@@ -1,6 +1,7 @@
 #include "p4.h"
 #include "server.h"
 
+void *server(void *token);
 void decode(char *message);
 void server_listen(char *message);
 
@@ -17,7 +18,7 @@ void *server(void *token)
     //sleep(3);
     me.endpoints_fp = fopen(ENDPOINTS, "a+");
   } while (me.endpoints_fp == NULL);
-  
+
   while ((read = getline(&line, &len, me.endpoints_fp)) != -1) {
     line[read - 1] = '\0';
     read--;
@@ -45,7 +46,7 @@ void *server(void *token)
     if (strcmp(message, "OK") == 0) {
       debug("Got the \"OK\"");
     }
-  } 
+  }
 
   pthread_barrier_wait(&me.barrier);
   free(line);
@@ -59,7 +60,7 @@ void decode(char *message)
   char *decoded_msg = strtok(message," ");
 
   int numNodes = atoi(decoded_msg);
-  
+
   pthread_mutex_lock(&me.lock);
   for (i = 0; i < numNodes; i++) {
 
@@ -69,9 +70,9 @@ void decode(char *message)
       debug("r_neighbors %d is more recent", index);
       me.neighbors[index].index = index;
       me.neighbors[index].heartbeat = heartbeat;
-      time(&me.neighbors[index].localtime); 
+      time(&me.neighbors[index].localtime);
     }
-  } 
+  }
   pthread_mutex_unlock(&me.lock);
 }
 
@@ -89,6 +90,6 @@ void server_listen(char *message)
       debug("I am dead");
       continue;
     }
-    decode(message); 
+    decode(message);
   }
 }

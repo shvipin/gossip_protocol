@@ -5,12 +5,18 @@
 nodeInfo *endpoints;
 int *send_to;
 
-char *encode(int *nodes,int length);
-void dump_my_info();
 void dump_node_info(neighbor_t node);
-
+void dump_my_info();
+void dump_nodes();
+void send_socket_msg(int socket_id, int neighbor_index, const char *msg, int msg_len);
+int choose_random_neighbors(int *neighbors);
+void send_heartbeats(int *send_to, int send_to_count);
+void send_nl(int *send_to, int send_to_count);
+void client_init();
+void client_cleanup();
 void check_dead_neighbors();
 void check_me_dead();
+char *encode(int *nodes,int length);
 
 void dump_node_info(neighbor_t node)
 {
@@ -30,8 +36,30 @@ void dump_my_info()
   }
 
   for (i = 0; i < args.num_nodes; i++) {
-    dump_node_info(me.neighbors[i]); 
+    dump_node_info(me.neighbors[i]);
   }
+}
+
+void dump_nodes()
+{
+  debug("Start dumping nodes to file");
+  int i;
+  char filename[FILENAME_SIZE];
+
+  sprintf(filename, "%s%d", NODE_DUMP, me.id);
+  FILE *list_fp = fopen(filename , "w");
+
+  char ok_fail[] = "FAIL";
+  if (me.alive) {
+    strcpy(ok_fail, "OK");
+  }
+  fprintf(list_fp, "line 1: %s\n", ok_fail);
+  for (i = 0; i < args.num_nodes; i++) {
+    if (i != me.id) {
+      fprintf(list_fp, "line %d: %d %d\n", i + 2, me.neighbors[i].index, (int) me.neighbors[i].localtime);
+    }
+  }
+  debug("Finished dumping nodes");
 }
 
 void send_socket_msg(int socket_id, int neighbor_index, const char *msg, int msg_len)
@@ -50,14 +78,14 @@ int choose_random_neighbors(int *neighbors)
 
   // don't maintain too much history
   memset(neighbors, -1, args.gossip_b * sizeof(int));
-        
+
   while (found_neighbors < args.gossip_b && found_neighbors + dead_nodes < args.num_nodes - 1) {
 
     temp = rand_r(&me.neighbor_seed) % args.num_nodes;
     if(prev_seen[temp] == 1) continue;
-    
+
     prev_seen[temp] = 1;
-    
+
     if (temp == me.id) continue;
 
     pthread_mutex_lock(&me.lock);
@@ -76,7 +104,7 @@ int choose_random_neighbors(int *neighbors)
 void send_heartbeats(int *send_to, int send_to_count)
 {
   int i;
-  char *msg = encode(&me.id, 1); 
+  char *msg = encode(&me.id, 1);
   debug("encoded message : %s", msg);
   int len = strlen(msg);
   for (i = 0; i < send_to_count; i++) {
@@ -92,8 +120,8 @@ void send_nl(int *send_to, int send_to_count)
   int i ;
   int selected_count = 0;
   char *msg;
-  
-  pthread_mutex_lock(&me.lock); 
+
+  pthread_mutex_lock(&me.lock);
   for(i = 0; i < args.num_nodes; i++){
     //select neighbors which are not dead or not unknown.
     if(me.neighbors[i].index >= STATE_LIVE)
@@ -116,7 +144,7 @@ void client_init()
 {
   //allocate space for storing index of me.neighbors to send heartbeats
   send_to = (int *)malloc(args.gossip_b * sizeof(int));
-  
+
   // allocate memory for our endpoints
   endpoints = (nodeInfo *)malloc(args.num_nodes * sizeof(nodeInfo));
   int i;
@@ -143,7 +171,7 @@ void client_init()
       log_err("inet_aton() failed");
       exit(1);
     }
-    numNodes++; 
+    numNodes++;
   }
   debug("Done reading endpoints file");
   fclose(me.endpoints_fp);
@@ -166,8 +194,9 @@ void client_init()
 
 void client_cleanup()
 {
-  debug("B(P+1)= %d time over",me.life_time);  
+  debug("B(P+1)= %d time over",me.life_time);
   dump_my_info();
+  dump_nodes();
   free(endpoints);
   free(send_to);
 }
@@ -179,10 +208,10 @@ void client()
   client_init();
   long time_counter = 0;
   int *send_nl_list = (int *)malloc(sizeof(int) * args.gossip_b);
-  int b = args.gossip_b; 
+  int b = args.gossip_b;
 
   while (time_counter < args.time_to_run) {
-    
+
     sleep(1);
     time_counter++;
 
@@ -193,7 +222,7 @@ void client()
     // sendheartbeats to me.neighbors
     send_heartbeats(send_to,args.gossip_b);
     me.neighbors[me.id].heartbeat++;
-    // send randomly chosen b neighbour list entries to b neighbours every c iterations 
+    // send randomly chosen b neighbour list entries to b neighbours every c iterations
     if (time_counter < args.gossip_c) {
       b = choose_random_neighbors(send_nl_list);
       send_nl(send_nl_list,b);
@@ -201,7 +230,7 @@ void client()
 
     check_dead_neighbors();
 
-    if(time_counter%args.time_bw_failures == 0 && me.current_dead_count < args.num_failure_nodes)   
+    if(time_counter%args.time_bw_failures == 0 && me.current_dead_count < args.num_failure_nodes)
       check_me_dead();
   }
   free(send_nl_list);
@@ -219,7 +248,7 @@ void check_dead_neighbors(){
     if(me.neighbors[i].index >= STATE_LIVE && me.neighbors[i].index != me.id){
       if(current_time - me.neighbors[i].localtime >= args.time_to_failure){
         me.neighbors[i].index = STATE_DEAD;
-      }    
+      }
     }
   }
   pthread_mutex_unlock(&me.lock);
@@ -230,7 +259,7 @@ void check_me_dead(){
 
   while(TRUE){
     temp = rand_r(&me.killer_seed)%args.num_nodes;
-    
+
     if(me.killed_history[temp] == 0) break;
   }
 
@@ -256,12 +285,12 @@ char *encode(int *nodes,int numNodes)
   pthread_mutex_lock(&me.lock);
   for (i = 0; i < numNodes; i++) {
     strcat(message," ");
-    
+
     sprintf(num_str,"%d",nodes[i]);
     strcat(message,num_str);
 
     strcat(message," ");
-    
+
     sprintf(num_str,"%d",me.neighbors[nodes[i]].heartbeat);
     strcat(message,num_str);
   }
