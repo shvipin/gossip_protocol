@@ -43,7 +43,7 @@ void dump_my_info()
 void dump_nodes()
 {
   debug("Start dumping nodes to file");
-  int i;
+  int i, j;
   char filename[FILENAME_SIZE];
 
   sprintf(filename, "%s%d", NODE_DUMP, me.id);
@@ -54,9 +54,10 @@ void dump_nodes()
     strcpy(ok_fail, "OK");
   }
   fprintf(list_fp, "line 1: %s\n", ok_fail);
+  j = 1;
   for (i = 0; i < args.num_nodes; i++) {
     if (i != me.id) {
-      fprintf(list_fp, "line %d: %d %d\n", i + 2, me.neighbors[i].index, (int) me.neighbors[i].localtime);
+      fprintf(list_fp, "line %d: %d %d\n", j++, me.neighbors[i].index, (int) me.neighbors[i].localtime);
     }
   }
   debug("Finished dumping nodes");
