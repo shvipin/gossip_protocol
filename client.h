@@ -1,3 +1,10 @@
+// Single Author info: 
+// vsharma5 Vipin Sharma 
+// Group info: 
+// skukret Sarthak Kukreti 
+// vsharma5 Vipin Sharma 
+// djzager David J Zager 
+
 #ifndef __CLIENT_H__
 #define __CLIENT_H__
 

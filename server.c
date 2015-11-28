@@ -1,3 +1,10 @@
+// Single Author info: 
+// djzager David J Zager 
+// Group info: 
+// skukret Sarthak Kukreti 
+// vsharma5 Vipin Sharma 
+// djzager David J Zager 
+
 #include "server.h"
 
 /**
@@ -87,7 +94,7 @@ void server_listen(char *message)
     if (recvfrom(me.self->socket, message, BUFFER_LENGTH, 0, NULL, NULL) == -1) {
       log_err("Failed to receive message");
     }
-
+    
     debug("Received message %s", message);
 
     if (!me.alive) {

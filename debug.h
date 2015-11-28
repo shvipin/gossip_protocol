@@ -1,3 +1,10 @@
+// Single Author info: 
+// djzager David J Zager 
+// Group info: 
+// skukret Sarthak Kukreti 
+// vsharma5 Vipin Sharma 
+// djzager David J Zager 
+
 // This is not original. This does not belong to us.
 // Taken from http://c.learncodethehardway.org/book/ex20.html for our sanity
 #ifndef __dbg_h__
@@ -6,6 +13,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+
+#define NDEBUG
 
 #ifdef NDEBUG
 #define debug(M, ...)

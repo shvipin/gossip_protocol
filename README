@@ -1,0 +1,126 @@
+// Single Author info: 
+// djzager David J Zager 
+// Group info: 
+// skukret Sarthak Kukreti 
+// vsharma5 Vipin Sharma 
+// djzager David J Zager 
+
+Running instructions:
+
+1. Use make to build executable
+   $ make clean
+   $ make a4
+
+2. Run program N times as:
+      $ ./p4 N b c F B P S T
+ 
+   where:
+       N Number of peer nodes
+       b gossip parameter
+       c gossip parameter
+       F number of seconds after which a node is considered dead
+       B number of bad nodes that should fail
+       P number of seconds to wait between failures
+       S the see of the random number generator
+       T the total number of seconds to run
+
+********************************************************************************
+Behaviour of gossip protocol under various test cases:
+
+We will keep following as base values for all parameters and modify few of them
+for each test case to show different behaviour.
+
+
+
+
+Test case 1.  
+--------------------------------------------------------------------------------
+
+N  b c  F  B P S T
+10 4 30 10 4 5 1 30
+
+  9        8        7        6       5        4         3       2        1        0
+
+ OK    |  FAIL  |  FAIL  |  OK    |  OK    |  OK    |  FAIL  |  OK    |  FAIL  |  OK
+ 0 28  |  0 14  |  0 8   |  0 29  |  0 28  |  0 29  |  0 5   |  0 29  |  0 19  |  1 20
+ 1 20  |  1 14  |  1 9   |  1 20  |  1 20  |  1 20  |  1 5   |  1 20  |  2 19  |  2 29
+ 2 29  |  2 14  |  2 9   |  2 29  |  2 29  |  2 29  |  2 4   |  3 5   |  3 5   |  3 5
+ 3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  4 5   |  4 29  |  4 19  |  4 29
+ 4 29  |  4 15  |  4 10  |  4 29  |  4 29  |  5 29  |  5 4   |  5 29  |  5 18  |  5 29
+ 5 29  |  5 14  |  5 9   |  5 29  |  6 29  |  6 29  |  6 4   |  6 29  |  6 19  |  6 29
+ 6 29  |  6 14  |  6 9   |  7 10  |  7 10  |  7 10  |  7 5   |  7 10  |  7 10  |  7 10
+ 7 10  |  7 10  |  8 9   |  8 15  |  8 15  |  8 15  |  8 5   |  8 15  |  8 15  |  8 15
+ 8 15  |  9 14  |  9 9   |  9 29  |  9 29  |  9 29  |  9 4   |  9 29  |  9 19  |  9 29
+
+We regard this as base testcase for analysis. We will be comparing result of this testcase to other testcases output.
+Nodes failed are 1(at heartbeat 20),3(5),7(10),8(15)
+Due to high value of 'b' and 'c' each node is getting information of nodes failed. 
+
+
+Test case 2 (set b = 1)
+--------------------------------------------------------------------------------
+N  b c  F  B P S T
+10 1 30 10 4 5 1 30
+
+  9        8        7        6       5        4         3       2        1        0
+
+ OK    |  FAIL  |  FAIL  |  OK    |  OK    |  OK    |  FAIL  |  OK    |  FAIL  |  OK
+ 0 25  |  0 13  |  0 6   |  0 29  |  0 19  |  0 27  |  0 3   |  0 9   |  0 17  |  1 20
+ 1 20  |  1 11  |  1 8   |  1 20  |  1 20  |  1 20  |  1 4   |  1 9   |  2 15  |  2 24
+ 2 28  |  2 11  |  2 6   |  2 28  |  2 29  |  2 24  |  2 4   |  3 5   |  3 5   |  3 5
+ 3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  4 3   |  4 10  |  4 16  |  4 24
+ 4 27  |  4 14  |  4 5   |  4 29  |  4 19  |  5 26  |  5 4   |  5 26  |  5 17  |  5 25
+ 5 27  |  5 12  |  5 8   |  5 29  |  6 29  |  6 27  |  6 4   |  6 9   |  6 18  |  6 28
+ 6 26  |  6 12  |  6 5   |  7 10  |  7 10  |  7 10  |  7 3   |  7 9   |  7 10  |  7 10
+ 7 10  |  7 10  |  8 6   |  8 15  |  8 15  |  8 15  |  8 4   |  8 10  |  8 15  |  8 15
+ 8 15  |  9 13  |  9 5   |  9 29  |  9 29  |  9 25  |  9 3   |  9 27  |  9 20  |  9 25
+
+Since 'b' is number of neighbors to send heartbeat and neighborlist, therefore there will be higher degree of 
+seperation between nodes.
+
+Low value of 'b' causes some nodes to have very old heartbeat values and those nodes might be considered dead 
+depending on value of F.
+
+
+Test case 3 (set F = 3)
+--------------------------------------------------------------------------------
+
+N  b c  F  B P S T
+10 4 30 3  4 5 1 30
+
+  9        8        7        6       5        4         3       2        1        0
+
+ OK    |  FAIL  |  FAIL  |  OK    |  OK    |  OK    |  FAIL  |  OK    |  FAIL  |  OK
+ 0 29  |  0 14  |  0 9   |  0 29  |  0 29  |  0 29  |  0 4   |  0 29  |  0 20  |  1 20
+ 1 20  |  1 14  |  1 9   |  1 20  |  1 20  |  1 20  |  1 3   |  1 20  |  2 19  |  2 29
+ 2 29  |  2 13  |  2 9   |  2 29  |  2 29  |  2 29  |  2 4   |  3 5   |  3 5   |  3 5
+ 3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  4 4   |  4 29  |  4 20  |  4 29
+ 4 29  |  4 14  |  4 9   |  4 29  |  4 29  |  5 29  |  5 3   |  5 29  |  5 20  |  5 29
+ 5 29  |  5 13  |  5 9   |  5 29  |  6 29  |  6 29  |  6 4   |  6 29  |  6 19  |  6 29
+ 6 29  |  6 14  |  6 9   |  7 10  |  7 10  |  7 10  |  7 4   |  7 10  |  7 10  |  7 10
+ 7 10  |  7 10  |  8 9   |  8 15  |  8 15  |  8 15  |  8 3   |  8 15  |  8 15  |  8 15
+ 8 15  |  9 14  |  9 9   |  9 29  |  9 29  |  9 29  |  9 3   |  9 29  |  9 20  |  9 29
+
+Lower value of 'F' results in higher probability of node to be considered failed early even if that node is not dead.
+
+Test case 4 (set c = 10)
+--------------------------------------------------------------------------------
+
+N  b c  F  B P S T
+10 4 10 10 4 5 1 30
+
+  9        8        7        6       5        4         3       2        1        0
+
+ OK    |  FAIL  |  FAIL  |  OK    |  OK    |  OK    |  FAIL  |  OK    |  FAIL  |  OK
+ 0 9   |  0 14  |  0 9   |  0 9   |  0 9   |  0 9   |  0 5   |  0 8   |  0 18  |  1 8
+ 1 9   |  1 14  |  1 9   |  1 9   |  1 19  |  1 9   |  1 5   |  1 8   |  2 9   |  2 8
+ 2 9   |  2 9   |  2 9   |  2 29  |  2 29  |  2 29  |  2 5   |  3 5   |  3 5   |  3 5
+ 3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  3 5   |  4 5   |  4 8   |  4 19  |  4 9
+ 4 9   |  4 14  |  4 9   |  4 29  |  4 29  |  5 29  |  5 5   |  5 8   |  5 9   |  5 29
+ 5 29  |  5 9   |  5 9   |  5 29  |  6 29  |  6 8   |  6 4   |  6 7   |  6 9   |  6 29
+ 6 9   |  6 8   |  6 9   |  7 9   |  7 9   |  7 9   |  7 5   |  7 8   |  7 9   |  7 9
+ 7 9   |  7 9   |  8 9   |  8 9   |  8 14  |  8 9   |  8 4   |  8 14  |  8 9   |  8 8
+ 8 14  |  9 14  |  9 9   |  9 29  |  9 29  |  9 9   |  9 4   |  9 7   |  9 18  |  9 8
+
+'c' is parameter to denote time limit for  sending neighbor list. For values of 'c' we can observe neighbor list
+is not shared and due to parameter 'F' nodes that do not send heartbeat directly will be considered dead after 'F' seconds.

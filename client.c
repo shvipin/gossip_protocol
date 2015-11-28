@@ -1,5 +1,13 @@
+// Single Author info: 
+// vsharma5 Vipin Sharma 
+// Group info: 
+// skukret Sarthak Kukreti 
+// vsharma5 Vipin Sharma 
+// djzager David J Zager 
+
 #include <unistd.h>
 #include "client.h"
+#include <stdlib.h>
 
 /**
  * Debug function to dump a single nodes information to stdout
@@ -41,15 +49,16 @@ void dump_nodes()
   sprintf(filename, "%s%d", NODE_DUMP, me.id);
   FILE *list_fp = fopen(filename , "w");
 
-  char ok_fail[] = "FAIL";
+  char ok_fail[] = "FAIL ";
   if (me.alive) {
-    strcpy(ok_fail, "OK");
+    strcpy(ok_fail, "OK ");
   }
-  fprintf(list_fp, "line 1: %s\n", ok_fail);
+  
+  fprintf(list_fp, "%s\n", ok_fail);
   j = 2;
   for (i = 0; i < args.num_nodes; i++) {
     if (i != me.id) {
-      fprintf(list_fp, "line %d: %d %d\n", j++, me.neighbors[i].index, (int) me.neighbors[i].localtime);
+      fprintf(list_fp, "%d %d\n", i, (int) me.neighbors[i].heartbeat);
     }
   }
   debug("Finished dumping nodes");

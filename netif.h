@@ -1,3 +1,10 @@
+// Single Author info: 
+// skukret Sarthak Kukreti 
+// Group info: 
+// skukret Sarthak Kukreti 
+// vsharma5 Vipin Sharma 
+// djzager David J Zager 
+
 #ifndef __NETIF_H__
 #define __NETIF_H__
 #include <netinet/in.h>
