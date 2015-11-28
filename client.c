@@ -46,7 +46,7 @@ void dump_nodes()
     strcpy(ok_fail, "OK");
   }
   fprintf(list_fp, "line 1: %s\n", ok_fail);
-  j = 1;
+  j = 2;
   for (i = 0; i < args.num_nodes; i++) {
     if (i != me.id) {
       fprintf(list_fp, "line %d: %d %d\n", j++, me.neighbors[i].index, (int) me.neighbors[i].localtime);
