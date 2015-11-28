@@ -1,23 +1,9 @@
 #include <unistd.h>
-#include "p4.h"
 #include "client.h"
 
-nodeInfo *endpoints;
-int *send_to;
-
-void dump_node_info(neighbor_t node);
-void dump_my_info();
-void dump_nodes();
-void send_socket_msg(int socket_id, int neighbor_index, const char *msg, int msg_len);
-int choose_random_neighbors(int *neighbors);
-void send_heartbeats(int *send_to, int send_to_count);
-void send_nl(int *send_to, int send_to_count);
-void client_init();
-void client_cleanup();
-void check_dead_neighbors();
-void check_me_dead();
-char *encode(int *nodes,int length);
-
+/**
+ * Debug function to dump a single nodes information to stdout
+ */
 void dump_node_info(neighbor_t node)
 {
   debug("#############################");
@@ -27,6 +13,9 @@ void dump_node_info(neighbor_t node)
   debug("#############################");
 }
 
+/**
+ * Debug function to dump the info of all nodes in system to stdout
+ */
 void dump_my_info()
 {
   int i;
@@ -40,6 +29,9 @@ void dump_my_info()
   }
 }
 
+/**
+ * Dump my node info and neighbor list to listX where X is my id.
+ */
 void dump_nodes()
 {
   debug("Start dumping nodes to file");
@@ -63,11 +55,17 @@ void dump_nodes()
   debug("Finished dumping nodes");
 }
 
+/**
+ * Send message (message) to a specified neighbor
+ */
 void send_socket_msg(int socket_id, int neighbor_index, const char *msg, int msg_len)
 {
   sendto(socket_id, msg, msg_len, 0, &endpoints[neighbor_index].addrInfo, sizeof(struct sockaddr_in));
 }
 
+/**
+ * Randomly get neighbors and store the information in an integer array
+ */
 int choose_random_neighbors(int *neighbors)
 {
   int i;
@@ -114,7 +112,9 @@ void send_heartbeats(int *send_to, int send_to_count)
   free(msg);
 }
 
-// Sends whole known live neighbor list entries to predetermined me.neighbors in send_to
+/**
+ * Sends whole known live neighbor list entries to predetermined me.neighbors in send_to
+ */
 void send_nl(int *send_to, int send_to_count)
 {
   int *neighbor_list = (int*) malloc(sizeof(int)*args.num_nodes);
@@ -141,6 +141,9 @@ void send_nl(int *send_to, int send_to_count)
   return;
 }
 
+/**
+ * Initialize client with all the information we'll ever need
+ */
 void client_init()
 {
   //allocate space for storing index of me.neighbors to send heartbeats
@@ -193,6 +196,10 @@ void client_init()
   choose_random_neighbors(send_to);
 }
 
+/**
+ * Cleanup after we have finished executing, don't forget to dump the neighbor list
+ * before we exit
+ */
 void client_cleanup()
 {
   debug("B(P+1)= %d time over",me.life_time);
@@ -202,6 +209,9 @@ void client_cleanup()
   free(send_to);
 }
 
+/**
+ * This is the heart of the client, where control of when messages are sent lives.
+ */
 void client()
 {
   debug("Client function started...");
@@ -238,6 +248,9 @@ void client()
   client_cleanup();
 }
 
+/**
+ * Go through our neighbor list and see if anyone has died while we were doing other things
+ */
 void check_dead_neighbors(){
   int i = 0;
   time_t current_time;
@@ -255,6 +268,9 @@ void check_dead_neighbors(){
   pthread_mutex_unlock(&me.lock);
 }
 
+/**
+ * See if I am the node to die.
+ */
 void check_me_dead(){
   int temp = 0;
 
@@ -273,7 +289,10 @@ void check_me_dead(){
   }
 }
 
-char *encode(int *nodes,int numNodes)
+/**
+ * Encode the neighborlist as a string
+ */
+char *encode(int *nodes, int numNodes)
 {
   int i;
   char *message = (char *)malloc(BUFFER_LENGTH);

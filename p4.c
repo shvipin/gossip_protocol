@@ -5,6 +5,10 @@
 gossip_args_t args;
 self_t me;
 
+/**
+ * Start the execution of the program, set important global
+ * values and dispatch server thread and client.
+ */
 int main(int argc, const char *argv[])
 {
   pthread_t server_thread;

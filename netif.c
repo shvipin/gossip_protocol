@@ -1,5 +1,8 @@
 #include "netif.h"
 
+/**
+ * Set up a node for client/server communication using UDP
+ */
 nodeInfo *setupNode(void)
 {
   debug("Someone wants to setup a node");
@@ -59,11 +62,17 @@ nodeInfo *setupNode(void)
   return node;
 }
 
+/**
+ * Cleanup a node by closing the specified socket
+ */
 int cleanupNode(int socket)
 {
   close(socket);
 }
 
+/**
+ * Convenience function to convert a node to a string (ip:port)
+ */
 char *getNodeInfo(nodeInfo *node)
 {
   char *buf = (char *) malloc(NODE_INFO_SIZE * sizeof(char));
@@ -72,6 +81,9 @@ char *getNodeInfo(nodeInfo *node)
   return buf;
 }
 
+/**
+ * Convenience function to split ip:port into its pieces
+ */
 char *splitAddr(char *nodeAddr)
 {
   debug("Asked to split %s", nodeAddr);

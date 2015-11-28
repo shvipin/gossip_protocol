@@ -1,10 +1,8 @@
-#include "p4.h"
 #include "server.h"
 
-void *server(void *token);
-void decode(char *message);
-void server_listen(char *message);
-
+/**
+ * Server function that listens for messages from clients
+ */
 void *server(void *token)
 {
   me.self = setupNode();
@@ -53,6 +51,9 @@ void *server(void *token)
   server_listen(message);
 }
 
+/**
+ * Convert a message from a client into data we can use
+ */
 void decode(char *message)
 {
   debug("Start decoding message %s", message);
@@ -76,6 +77,9 @@ void decode(char *message)
   pthread_mutex_unlock(&me.lock);
 }
 
+/**
+ * This function has one job, to listen for messages
+ */
 void server_listen(char *message)
 {
   while (TRUE) {
